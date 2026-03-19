@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF → Blogger Post Generator | postalrulings</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --navy: #0f2340;
+    --navy-mid: #1e3a5a;
+    --blue: #1e5aa0;
+    --blue-light: #4a8fd4;
+    --gold: #b8940a;
+    --gold-light: #d4a017;
+    --cream: #f8f6f0;
+    --grey-100: #f4f7fb;
+    --grey-200: #e8eef6;
+    --grey-300: #d0dcea;
+    --grey-500: #6b7c99;
+    --text: #0f1e33;
+    --red: #c0392b;
+    --green: #1b5e20;
+    --surface: #ffffff;
+    --shadow: 0 4px 24px rgba(15,35,64,0.10);
+    --shadow-lg: 0 12px 48px rgba(15,35,64,0.18);
+    --radius: 10px;
+    --transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+  }
+  .header-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 32px;
+    gap: 20px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--gold-light);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .logo-text span { color: var(--gold-light); }
+  .logo-sub {
+    font-size: 10px;
+    color: #90b4d4;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .header-badge {
+    background: rgba(180,148,10,0.15);
+    border: 1px solid var(--gold);
+    color: var(--gold-light);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .app-layout {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 32px 80px;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    position: sticky;
+    top: 76px;
+  }
+  .panel-head {
+    background: var(--navy);
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .panel-head h2 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .panel-head .step-badge {
+    background: var(--gold-light);
+    color: var(--navy);
+    font-size: 11px;
+    font-weight: 700;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .panel-body { padding: 22px; }
+
+  /* ── DROP ZONE ── */
+  .dropzone {
+    border: 2px dashed var(--grey-300);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    background: var(--grey-100);
+  }
+  .dropzone:hover, .dropzone.drag-over {
+    border-color: var(--blue);
+    background: #eef4ff;
+  }
+  .dropzone.has-file {
+    border-color: var(--green);
+    background: #f0faf0;
+  }
+  .dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .dz-icon { font-size: 40px; margin-bottom: 10px; }
+  .dz-title { font-size: 14px; font-weight: 600; color: var(--navy-mid); margin-bottom: 4px; }
+  .dz-sub { font-size: 12px; color: var(--grey-500); }
+  .dz-filename {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--green);
+    margin-top: 8px;
+    font-weight: 500;
+    word-break: break-all;
+  }
+
+  /* ── FORM FIELDS ── */
+  .field-group { margin-top: 18px; }
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--grey-500);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .field-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--grey-300);
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface);
+    transition: var(--transition);
+    outline: none;
+  }
+  .field-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(30,90,160,0.08); }
+  .field-input::placeholder { color: #b0bcc8; }
+  textarea.field-input { resize: vertical; min-height: 80px; }
+  select.field-input { cursor: pointer; }
+
+  /* ── REFERENCE TAGS ── */
+  .ref-tags-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .ref-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1.5px solid transparent;
+  }
+  .ref-tag.prev { background: #fdf0ee; color: var(--red); border-color: #f5c6c2; }
+  .ref-tag.prev:hover { background: var(--red); color: #fff; }
+  .ref-tag.later { background: #e8f4e8; color: var(--green); border-color: #b8ddb8; }
+  .ref-tag.later:hover { background: var(--green); color: #fff; }
+  .ref-tag .tag-del { font-size: 13px; line-height: 1; opacity: 0.7; }
+
+  /* ── ADD REF FORM ── */
+  .add-ref-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .add-ref-form .field-input { font-size: 12px; padding: 7px 10px; }
+  .add-ref-btn {
+    grid-column: 1/-1;
+    padding: 8px;
+    border: none;
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .add-ref-btn.prev-btn { background: #fdf0ee; color: var(--red); }
+  .add-ref-btn.prev-btn:hover { background: var(--red); color: #fff; }
+  .add-ref-btn.later-btn { background: #e8f4e8; color: var(--green); }
+  .add-ref-btn.later-btn:hover { background: var(--green); color: #fff; }
+
+  /* ── STATUS SECTION ── */
+  .status-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .status-chip {
+    padding: 8px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: var(--transition);
+  }
+  .status-chip:hover { opacity: 0.85; }
+  .status-chip.active { border-color: currentColor; font-weight: 700; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
+  .chip-supersedes { background: #fff3cd; color: #7a5c00; }
+  .chip-supersedes.active { background: #f0c040; color: #3a2c00; }
+  .chip-superseded { background: #fdf0ee; color: var(--red); }
+  .chip-superseded.active { background: var(--red); color: #fff; }
+  .chip-modified { background: #fff8e1; color: #5a3e00; }
+  .chip-modified.active { background: #d4a017; color: #fff; }
+  .chip-active { background: #e8f4e8; color: var(--green); }
+  .chip-active.active { background: var(--green); color: #fff; }
+
+  /* ── GENERATE BTN ── */
+  .generate-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .generate-btn:hover { background: var(--blue); box-shadow: var(--shadow); }
+  .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .generate-btn .btn-spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: none;
+  }
+  .generate-btn.loading .btn-spinner { display: block; }
+  .generate-btn.loading .btn-text { opacity: 0.7; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── OUTPUT PANEL ── */
+  .output-panel {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+  }
+  .output-head {
+    background: var(--navy);
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .output-head h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .output-tabs {
+    display: flex;
+    gap: 6px;
+  }
+  .tab-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    color: #90b4d4;
+    background: transparent;
+    transition: var(--transition);
+    letter-spacing: 0.5px;
+  }
+  .tab-btn.active { background: var(--gold-light); color: var(--navy); border-color: var(--gold-light); }
+  .tab-btn:hover:not(.active) { border-color: rgba(255,255,255,0.5); color: #fff; }
+
+  /* ── ACTIONS BAR ── */
+  .actions-bar {
+    padding: 12px 22px;
+    background: var(--grey-100);
+    border-bottom: 1px solid var(--grey-200);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .action-btn {
+    padding: 7px 16px;
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--grey-300);
+    color: var(--navy-mid);
+    background: var(--surface);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .action-btn:hover { border-color: var(--blue); color: var(--blue); background: #eef4ff; }
+  .action-btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .action-btn.primary:hover { background: var(--navy); border-color: var(--navy); }
+
+  /* ── CONTENT AREAS ── */
+  .output-content {
+    flex: 1;
+    overflow: auto;
+  }
+  #previewFrame {
+    width: 100%;
+    border: none;
+    min-height: 700px;
+    display: block;
+  }
+  #htmlCode {
+    width: 100%;
+    padding: 22px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+    background: #f8fafb;
+    border: none;
+    resize: none;
+    outline: none;
+    min-height: 700px;
+    display: none;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+    gap: 16px;
+    color: var(--grey-500);
+    text-align: center;
+    padding: 40px;
+  }
+  .empty-icon { font-size: 64px; opacity: 0.4; }
+  .empty-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--navy-mid); opacity: 0.5; }
+  .empty-sub { font-size: 13px; max-width: 340px; }
+
+  /* ── PROGRESS ── */
+  .progress-wrap {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+    gap: 20px;
+    padding: 40px;
+  }
+  .progress-wrap.show { display: flex; }
+  .progress-ring {
+    width: 80px; height: 80px;
+    border: 4px solid var(--grey-200);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  .progress-steps { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; }
+  .progress-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: var(--transition);
+    background: var(--grey-100);
+    color: var(--grey-500);
+  }
+  .progress-step.active { background: #eef4ff; color: var(--blue); }
+  .progress-step.done { background: #f0faf0; color: var(--green); }
+  .progress-step .step-icon { font-size: 16px; width: 24px; text-align: center; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: var(--green); }
+  .toast.error { background: var(--red); }
+  .toast.info { background: var(--blue); }
+
+  /* ── BLOG INDEX SIDEBAR ── */
+  .blog-index {
+    margin-top: 20px;
+    border: 1.5px solid var(--grey-200);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .blog-index-head {
+    background: var(--navy-mid);
+    padding: 9px 14px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #90b4d4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .blog-index-list {
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+  .blog-index-item {
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 11.5px;
+    color: var(--grey-500);
+    transition: var(--transition);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    border-bottom: 1px solid var(--grey-100);
+  }
+  .blog-index-item:hover { background: var(--grey-100); color: var(--blue); }
+  .blog-index-item .bi-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    background: var(--grey-200);
+    padding: 2px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .blog-index-item .bi-title { line-height: 1.4; }
+
+  /* ── SCROLLBARS ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--grey-100); }
+  ::-webkit-scrollbar-thumb { background: var(--grey-300); border-radius: 3px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .app-layout { grid-template-columns: 1fr; }
+    .panel { position: static; }
+  }
+  @media (max-width: 600px) {
+    .app-layout { padding: 16px; gap: 16px; }
+    .header-inner { padding: 12px 16px; }
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--grey-200);
+    margin: 18px 0;
+  }
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--grey-500);
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">📜</div>
+      <div>
+        <div class="logo-text">Postal<span>Rulings</span></div>
+        <div class="logo-sub">PDF → Blogger · Powered by Gemini Free</div>
+      </div>
+    </div>
+    <div class="header-badge">✦ Gemini 2.0 — Free</div>
+  </div>
+</header>
+
+<!-- APP LAYOUT -->
+<div class="app-layout">
+
+  <!-- SETUP GUIDE BANNER -->
+  <div id="setupBanner" style="grid-column:1/-1;background:#fff8e1;border:1.5px solid #d4a017;border-left:5px solid #d4a017;border-radius:10px;padding:16px 22px;display:flex;align-items:flex-start;gap:16px;font-family:'DM Sans',sans-serif;">
+    <div style="font-size:28px;flex-shrink:0;">🔑</div>
+    <div style="flex:1;">
+      <div style="font-size:13px;font-weight:700;color:#5a3e00;letter-spacing:0.5px;margin-bottom:6px;">Quick Setup — Free Gemini API Key Required</div>
+      <div style="font-size:12.5px;color:#7a5c00;line-height:1.7;">
+        This app uses <strong>Google Gemini 2.0 Flash</strong> — completely free, 1,500 requests/day, no credit card needed.<br>
+        <strong>Step 1:</strong> Go to <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#1e5aa0;font-weight:600;">aistudio.google.com/apikey</a> → Sign in with Google → Click <strong>"Create API Key"</strong> → Copy it<br>
+        <strong>Step 2:</strong> In Vercel → Your Project → <strong>Settings → Environment Variables</strong> → Add <code style="background:#f0e8c8;padding:1px 5px;border-radius:3px;">GEMINI_API_KEY</code> = your key → Save → Redeploy<br>
+        <strong>Step 3:</strong> Come back here and start converting PDFs! 🎉
+      </div>
+    </div>
+    <button onclick="document.getElementById('setupBanner').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:#7a5c00;flex-shrink:0;padding:0;line-height:1;">✕</button>
+  </div>
+
+  <!-- LEFT PANEL: CONTROLS -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="step-badge">1</div>
+      <h2>Upload &amp; Configure</h2>
+    </div>
+    <div class="panel-body">
+
+      <!-- DROP ZONE -->
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="pdfFile" accept=".pdf,application/pdf">
+        <div class="dz-icon" id="dzIcon">📄</div>
+        <div class="dz-title" id="dzTitle">Drop PDF here or click to browse</div>
+        <div class="dz-sub" id="dzSub">Government OMs, Rulings, Circulars, Orders</div>
+        <div class="dz-filename" id="dzFilename"></div>
+      </div>
+
+      <!-- BLOG URL -->
+      <div class="field-group">
+        <label class="field-label">Blog Post URL (after publishing)</label>
+        <input class="field-input" id="thisPostUrl" type="url" placeholder="https://postalrulings.blogspot.com/…">
+      </div>
+
+      <!-- DRIVE LINK -->
+      <div class="field-group">
+        <label class="field-label">Google Drive PDF Link</label>
+        <input class="field-input" id="driveLink" type="url" placeholder="https://drive.google.com/file/d/…">
+      </div>
+
+      <hr class="divider">
+      <div class="section-title">Document Status</div>
+
+      <!-- STATUS CHIPS -->
+      <div class="status-row">
+        <div class="status-chip chip-active" data-status="active" onclick="toggleStatus(this)">✅ Active / Operative</div>
+        <div class="status-chip chip-supersedes" data-status="supersedes" onclick="toggleStatus(this)">🔄 Supersedes Earlier OMs</div>
+        <div class="status-chip chip-superseded" data-status="superseded" onclick="toggleStatus(this)">❌ Superseded</div>
+        <div class="status-chip chip-modified" data-status="modified" onclick="toggleStatus(this)">✏️ Partially Modified</div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- PREVIOUS REFERENCES -->
+      <div class="section-title">Previous References (OMs this supersedes / amends)</div>
+      <div class="ref-tags-wrap" id="prevRefs"></div>
+      <div class="add-ref-form">
+        <input class="field-input" id="prevDate" placeholder="Date (dd.mm.yyyy)">
+        <input class="field-input" id="prevTitle" placeholder="Short title / subject">
+        <input class="field-input" id="prevUrl" placeholder="Post URL" style="grid-column:1/-1">
+        <button class="add-ref-btn prev-btn" onclick="addRef('prev')">+ Add Previous Reference</button>
+      </div>
+
+      <hr class="divider">
+
+      <!-- LATER REFERENCES -->
+      <div class="section-title">Later References (OMs that amend / reference this)</div>
+      <div class="ref-tags-wrap" id="laterRefs"></div>
+      <div class="add-ref-form">
+        <input class="field-input" id="laterDate" placeholder="Date (dd.mm.yyyy)">
+        <input class="field-input" id="laterTitle" placeholder="Short title / subject">
+        <input class="field-input" id="laterUrl" placeholder="Post URL" style="grid-column:1/-1">
+        <button class="add-ref-btn later-btn" onclick="addRef('later')">+ Add Later Reference</button>
+      </div>
+
+      <hr class="divider">
+
+      <!-- KNOWN BLOG POSTS QUICK-FILL -->
+      <div class="section-title">Quick-fill from Blog Index</div>
+      <div class="blog-index">
+        <div class="blog-index-head">
+          <span>postalrulings.blogspot.com — All Posts</span>
+          <span id="indexCount" style="font-size:10px;color:#b2d8f0;"></span>
+        </div>
+        <div class="blog-index-list" id="blogIndexList"></div>
+      </div>
+
+      <!-- GENERATE BUTTON -->
+      <button class="generate-btn" id="generateBtn" onclick="generatePost()">
+        <div class="btn-spinner"></div>
+        <span class="btn-text">✨ Generate Blogger Post</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: OUTPUT -->
+  <div class="output-panel">
+    <div class="output-head">
+      <h2>📋 Generated Post</h2>
+      <div class="output-tabs">
+        <button class="tab-btn active" onclick="switchTab('preview', this)">Preview</button>
+        <button class="tab-btn" onclick="switchTab('html', this)">HTML Code</button>
+      </div>
+    </div>
+    <div class="actions-bar" id="actionsBar" style="display:none;">
+      <button class="action-btn primary" onclick="copyHTML()">📋 Copy HTML</button>
+      <button class="action-btn" onclick="downloadHTML()">⬇️ Download .html</button>
+      <button class="action-btn" onclick="openPreview()">🔗 Full Preview</button>
+      <button class="action-btn" onclick="regenerate()">🔄 Regenerate</button>
+    </div>
+    <div class="output-content" id="outputContent">
+
+      <!-- EMPTY STATE -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">📝</div>
+        <div class="empty-title">Ready to Generate</div>
+        <div class="empty-sub">Upload a Government PDF document, fill in the reference links, then click "Generate Blogger Post" to create a professional formatted post in the postalrulings style.</div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-ring"></div>
+        <div class="progress-steps">
+          <div class="progress-step" id="step1"><span class="step-icon">📄</span>Reading PDF content…</div>
+          <div class="progress-step" id="step2"><span class="step-icon">🧠</span>Analysing document structure…</div>
+          <div class="progress-step" id="step3"><span class="step-icon">🖼️</span>Generating cover image…</div>
+          <div class="progress-step" id="step4"><span class="step-icon">🔗</span>Building reference tables…</div>
+          <div class="progress-step" id="step5"><span class="step-icon">✍️</span>Formatting content sections…</div>
+          <div class="progress-step" id="step6"><span class="step-icon">✅</span>Finalising post…</div>
+        </div>
+      </div>
+
+      <!-- PREVIEW IFRAME -->
+      <iframe id="previewFrame" style="display:none;"></iframe>
+      <!-- HTML CODE -->
+      <textarea id="htmlCode" spellcheck="false" readonly></textarea>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let pdfFile = null;
+let pdfBase64 = null;
+let generatedHTML = '';
+let currentTab = 'preview';
+let selectedStatus = 'active';
+const prevRefs = [];
+const laterRefs = [];
+
+// Blog index — all known posts
+const BLOG_INDEX = [
+  { date: '07.04.1999', title: 'Delegation of Powers under CGHS — Referral System, Permission Cases & Ex-post-Facto Approval', url: 'https://postalrulings.blogspot.com/2026/03/07041999-delegation-of-powers-under.html', label: 'CGHS' },
+  { date: '05.10.2016', title: 'Delegation of Powers for Settlement of Reimbursement Claims / Permissions / Ex-post Facto Approval — Pensioner CGHS Beneficiaries', url: 'https://postalrulings.blogspot.com/2026/03/05102016-delegation-of-powers-for.html', label: 'CGHS' },
+  { date: '27.12.2023', title: 'Delegation of Financial Powers for CGHS — Director Rs. 3L, AS&DG Rs. 5L (Revised)', url: 'https://postalrulings.blogspot.com/2026/03/27122023-delegation-of-financial-powers.html', label: 'CGHS' },
+  { date: '28.06.2024', title: 'Revised Referral Guidelines for CGHS Beneficiaries', url: 'https://postalrulings.blogspot.com/2026/03/28062024-revised-guidelines-for.html', label: 'CGHS' },
+  { date: '13.09.2022', title: 'Cancer Treatment at Tata Memorial Centre (TMH) under CGHS', url: 'https://postalrulings.blogspot.com/2026/03/13092022-cancer-treatment-at-tata.html', label: 'CGHS' },
+  { date: 'SR 116', title: 'Travelling Allowance on Transfer', url: 'https://postalrulings.blogspot.com/2025/06/sr-116-ta-on-transfer.html', label: 'TA' },
+  { date: '29.08.2008', title: '6th CPC Resolution', url: 'https://postalrulings.blogspot.com/2025/07/29082008-6th-cpc-decisionpdf.html', label: '6th CPC' },
+  { date: '29.08.2008', title: 'CCS (Revised Pay) Rules 2008', url: 'https://postalrulings.blogspot.com/2025/07/ccs-rp-rules-2008.html', label: '6th CPC' },
+  { date: '13.09.2008', title: 'Clarification on Fixation of Payment under 6th CPC & DNI', url: 'https://postalrulings.blogspot.com/2025/07/13-09-2008-6th-cpc-clarifications-dnipdf.html', label: '6th CPC' },
+  { date: '13.10.2008', title: 'Upgraded Grade Pay 3200 to Postman during 6th CPC', url: 'https://postalrulings.blogspot.com/2025/07/13102008-6cpcpayfixationpayupgrade-3200.html', label: '6th CPC' },
+  { date: '09.02.2009', title: 'Pay Fixation of Medical Officers — 6th CPC', url: 'https://postalrulings.blogspot.com/2025/07/09022009-pay-fixation-of-medical.html', label: '6th CPC' },
+  { date: '13.03.2009', title: 'Date of Next Increment on Promotion on 1st January due to Sunday or Holiday', url: 'https://postalrulings.blogspot.com/2025/07/13032009-dni-due-to-sunday-or-holidaypdf.html', label: '6th CPC' },
+  { date: '26.03.2009', title: 'Pay Fixation on Deputation — 6th CPC', url: 'https://postalrulings.blogspot.com/2025/07/26032009-pay-fixation-on-deputationpdf.html', label: '6th CPC' },
+  { date: '21.07.2009', title: 'Replacement of S-30 Pay Scale by New HAG Scale', url: 'https://postalrulings.blogspot.com/2025/07/21072009-replace-s-30-by-hagpdf.html', label: '6th CPC' },
+  { date: '23.09.2009', title: 'Pay Fixation in New HAG Scale', url: 'https://postalrulings.blogspot.com/2025/07/23092009-fixation-in-new-hagpdf.html', label: '6th CPC' },
+  { date: '28.08.2009', title: 'Clarification on Pay Fixation on Deputation and in HAG Scale', url: 'https://postalrulings.blogspot.com/2025/07/28082009-clarification-on-deputation.html', label: '6th CPC' },
+  { date: '13.11.2009', title: 'Grant of Grade Pay 4200 and Grade Pay 4600', url: 'https://postalrulings.blogspot.com/2025/07/13112009-grant-of-gp-4200-and-gp-4600.html', label: '6th CPC' },
+  { date: '16.11.2009', title: 'Grant of Grade Pay 4600', url: 'https://postalrulings.blogspot.com/2025/07/16112009-grant-of-gp-4600pdf.html', label: '6th CPC' },
+  { date: '08.03.2010', title: 'FR 35 — Officiating Pay during 6th CPC', url: 'https://postalrulings.blogspot.com/2025/07/fr-35-officiating-pay-during-6th-cpcpdf.html', label: '6th CPC' },
+  { date: '03.01.2013', title: 'Re-exercise of Option under 6th CPC', url: 'https://postalrulings.blogspot.com/2025/07/03012013-revised-optionpdf.html', label: '6th CPC' },
+  { date: '07.01.2013', title: 'Pay Fixation in Same Grade Pay but Higher Responsibilities', url: 'https://postalrulings.blogspot.com/2025/07/07012013-fixation-in-same-grade-pay-but.html', label: '6th CPC' },
+  { date: '22.05.2013', title: 'Grant of One Increment on 01.01.2006 when Increment due Feb–Jun 2006', url: 'https://postalrulings.blogspot.com/2025/07/22052013-grant-of-one-incrementpdf.html', label: '6th CPC' },
+  { date: '12.12.2013', title: 'Counting of Broken Spells in Adhoc for Increment', url: 'https://postalrulings.blogspot.com/2025/07/counting-of-broken-spells-in-adhoc-for.html', label: '6th CPC' },
+  { date: '16.10.2015', title: 'Merger of Pre-Revised Scales', url: 'https://postalrulings.blogspot.com/2025/07/16102015-merger-of-pre-revised-scalespdf.html', label: '6th CPC' },
+  { date: '28.09.2018', title: 'Entry Pay for Direct Recruits in 6th CPC', url: 'https://postalrulings.blogspot.com/2025/07/entry-pay-for-direct-recruits-in-6th-cpc.html', label: '6th CPC' },
+  { date: '30.09.1997', title: 'CCS (Revised Pay) Rules, 1997 — 5th CPC', url: 'https://postalrulings.blogspot.com/2025/07/ccs-revised-pay-rules-1997.html', label: '5th CPC' },
+  { date: '26.03.1998', title: 'Pay Fixation Subsequent to January 1996 — 5th CPC', url: 'https://postalrulings.blogspot.com/2025/07/26-03-1998-pay-fixation-subsequent-to.html', label: '5th CPC' },
+  { date: '02.04.1998', title: 'CCS (RP) Rules 1997 — Clarification', url: 'https://postalrulings.blogspot.com/2025/07/02-04-1998-ccs-rp-rules-1997-clarification.html', label: '5th CPC' },
+  { date: '30.11.1998', title: 'Pay Fixation with Advance Increments during 5th CPC', url: 'https://postalrulings.blogspot.com/2025/07/301198-pay-fixation-with-advance.html', label: '5th CPC' },
+  { date: '05.07.1999', title: 'Minimum Benefit of Rs.100 during 5th CPC', url: 'https://postalrulings.blogspot.com/2025/07/minimum-benefit-of-rs100-during-5th-cpc.html', label: '5th CPC' },
+  { date: '23.07.1999', title: 'No PRC during Leave', url: 'https://postalrulings.blogspot.com/2025/07/no-prc-during-leave.html', label: '5th CPC' },
+  { date: '05.08.1981', title: 'Restriction of Officiating Pay under FR-35 during 3rd CPC', url: 'https://postalrulings.blogspot.com/2025/07/restriction-of-officiating-pay-under-fr.html', label: '4th CPC' },
+  { date: '22.10.1990', title: 'Restriction of Officiating Pay under FR-35 during 4th CPC', url: 'https://postalrulings.blogspot.com/2025/07/restriction-of-officiating-pay-under-fr_20.html', label: '4th CPC' },
+  { date: 'GDS Rules', title: 'GDS Conduct & Engagement Rules 2011/2020', url: 'https://postalrulings.blogspot.com/2019/09/gds-conduct-engagement-rules-2011.html', label: 'GDS' },
+  { date: '25.06.2018', title: 'Recommendations of One-man Committee on GDS Wages & Allowances', url: 'https://postalrulings.blogspot.com/2019/09/box-model-sample.html', label: 'GDS' },
+  { date: '01.07.2019', title: 'Enhancement of Gratuity & Severance to GDS w.e.f. 01.01.2016', url: 'https://postalrulings.blogspot.com/2019/09/enhancement-of-gratuity-severance-to.html', label: 'GDS' },
+  { date: 'UPS', title: 'Unified Pension Scheme (UPS)', url: 'https://postalrulings.blogspot.com/2025/06/unified-pension-scheme.html', label: 'UPS' },
+  { date: 'CGEGIS', title: 'CGEGIS Table of Benefits — Full Series (1988–2018)', url: 'https://postalrulings.blogspot.com/2020/06/cgegis-table-of-benefits-from-01012018.html', label: 'GIS' },
+  { date: 'CS(MA)', title: 'Central Services (Medical Attendance) Rules, 1944', url: 'https://postalrulings.blogspot.com/2020/07/central-government-medical-attendance.html', label: 'Medical' },
+];
+
+// ════════════════════════════════════════
+// INIT BLOG INDEX
+// ════════════════════════════════════════
+function initBlogIndex() {
+  const list = document.getElementById('blogIndexList');
+  document.getElementById('indexCount').textContent = BLOG_INDEX.length + ' posts';
+  list.innerHTML = BLOG_INDEX.map((p, i) => `
+    <div class="blog-index-item" onclick="quickFillRef(${i})">
+      <span class="bi-date">${p.date}</span>
+      <span class="bi-title">[${p.label}] ${p.title}</span>
+    </div>`).join('');
+}
+
+function quickFillRef(idx) {
+  const p = BLOG_INDEX[idx];
+  const target = confirm(`Add as PREVIOUS reference?\n\nOK = Previous  |  Cancel = Later`) ? 'prev' : 'later';
+  if (target === 'prev') {
+    document.getElementById('prevDate').value = p.date;
+    document.getElementById('prevTitle').value = p.title;
+    document.getElementById('prevUrl').value = p.url;
+  } else {
+    document.getElementById('laterDate').value = p.date;
+    document.getElementById('laterTitle').value = p.title;
+    document.getElementById('laterUrl').value = p.url;
+  }
+  showToast('info', `Filled ${target === 'prev' ? 'Previous' : 'Later'} reference — click Add to confirm`);
+}
+
+// ════════════════════════════════════════
+// FILE HANDLING
+// ════════════════════════════════════════
+document.getElementById('pdfFile').addEventListener('change', handleFileSelect);
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type === 'application/pdf') processFile(f);
+  else showToast('error', 'Please drop a PDF file');
+});
+
+function handleFileSelect(e) {
+  const f = e.target.files[0];
+  if (f) processFile(f);
+}
+
+function processFile(f) {
+  pdfFile = f;
+  dz.classList.add('has-file');
+  document.getElementById('dzIcon').textContent = '✅';
+  document.getElementById('dzTitle').textContent = 'PDF loaded';
+  document.getElementById('dzSub').textContent = `${(f.size/1024).toFixed(1)} KB`;
+  document.getElementById('dzFilename').textContent = f.name;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    pdfBase64 = ev.target.result.split(',')[1];
+  };
+  reader.readAsDataURL(f);
+  showToast('success', 'PDF loaded successfully');
+}
+
+// ════════════════════════════════════════
+// STATUS CHIPS
+// ════════════════════════════════════════
+function toggleStatus(el) {
+  document.querySelectorAll('.status-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  selectedStatus = el.dataset.status;
+}
+
+// ════════════════════════════════════════
+// REFERENCES
+// ════════════════════════════════════════
+function addRef(type) {
+  const date = document.getElementById(`${type}Date`).value.trim();
+  const title = document.getElementById(`${type}Title`).value.trim();
+  const url = document.getElementById(`${type}Url`).value.trim();
+  if (!date || !title) { showToast('error', 'Please fill in date and title'); return; }
+  const arr = type === 'prev' ? prevRefs : laterRefs;
+  arr.push({ date, title, url });
+  renderRefs();
+  document.getElementById(`${type}Date`).value = '';
+  document.getElementById(`${type}Title`).value = '';
+  document.getElementById(`${type}Url`).value = '';
+  showToast('success', `${type === 'prev' ? 'Previous' : 'Later'} reference added`);
+}
+
+function removeRef(type, i) {
+  (type === 'prev' ? prevRefs : laterRefs).splice(i, 1);
+  renderRefs();
+}
+
+function renderRefs() {
+  ['prev', 'later'].forEach(type => {
+    const arr = type === 'prev' ? prevRefs : laterRefs;
+    document.getElementById(`${type}Refs`).innerHTML = arr.map((r, i) => `
+      <div class="ref-tag ${type}" title="${r.url || 'No URL'}">
+        <span>${r.date} — ${r.title.length > 35 ? r.title.slice(0,32)+'…' : r.title}</span>
+        <span class="tag-del" onclick="removeRef('${type}', ${i})">×</span>
+      </div>`).join('');
+  });
+}
+
+// ════════════════════════════════════════
+// GENERATE POST
+// ════════════════════════════════════════
+async function generatePost() {
+  if (!pdfBase64) { showToast('error', 'Please upload a PDF first'); return; }
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.querySelector('.btn-text').textContent = 'Generating…';
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('previewFrame').style.display = 'none';
+  document.getElementById('htmlCode').style.display = 'none';
+  document.getElementById('actionsBar').style.display = 'none';
+
+  const pw = document.getElementById('progressWrap');
+  pw.classList.add('show');
+
+  const steps = ['step1','step2','step3','step4','step5','step6'];
+  let si = 0;
+  const stepInterval = setInterval(() => {
+    if (si > 0) { document.getElementById(steps[si-1]).classList.remove('active'); document.getElementById(steps[si-1]).classList.add('done'); }
+    if (si < steps.length) { document.getElementById(steps[si]).classList.add('active'); si++; }
+  }, 900);
+
+  try {
+    const postUrl = document.getElementById('thisPostUrl').value.trim();
+    const driveLink = document.getElementById('driveLink').value.trim();
+
+    // Build the prompt
+    const systemPrompt = buildSystemPrompt();
+    const userPrompt = buildUserPrompt(postUrl, driveLink);
+
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemPrompt,
+        userPrompt,
+        pdfBase64
+      })
+    });
+
+    const data = await response.json();
+    clearInterval(stepInterval);
+    steps.forEach(s => { document.getElementById(s).classList.remove('active'); document.getElementById(s).classList.add('done'); });
+
+    if (data.error) throw new Error(data.error);
+
+    generatedHTML = data.text || '';
+    // Strip markdown code fences if model wrapped in them
+    generatedHTML = generatedHTML.replace(/^```html?\n?/i, '').replace(/\n?```$/, '').trim();
+
+    setTimeout(() => {
+      pw.classList.remove('show');
+      renderOutput();
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.querySelector('.btn-text').textContent = '✨ Generate Blogger Post';
+      showToast('success', 'Blogger post generated successfully!');
+    }, 500);
+
+  } catch (err) {
+    clearInterval(stepInterval);
+    pw.classList.remove('show');
+    document.getElementById('emptyState').style.display = 'flex';
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.querySelector('.btn-text').textContent = '✨ Generate Blogger Post';
+    showToast('error', 'Error: ' + (err.message || 'Generation failed'));
+    console.error(err);
+  }
+}
+
+// ════════════════════════════════════════
+// PROMPT BUILDERS
+// ════════════════════════════════════════
+function buildSystemPrompt() {
+  const prevRefsBlock = prevRefs.length ? prevRefs.map(r =>
+    `  - Date: ${r.date} | Title: ${r.title} | URL: ${r.url || 'YOUR_PREV_LINK'}`).join('\n') : '  (none provided)';
+  const laterRefsBlock = laterRefs.length ? laterRefs.map(r =>
+    `  - Date: ${r.date} | Title: ${r.title} | URL: ${r.url || 'YOUR_LATER_LINK'}`).join('\n') : '  (none provided)';
+
+  const statusMap = {
+    active: 'ACTIVE — Document is fully operative.',
+    supersedes: 'SUPERSEDES — This document supersedes all earlier instructions on this subject.',
+    superseded: 'SUPERSEDED — This document has been superseded by a later OM.',
+    modified: 'PARTIALLY MODIFIED — Some paras of this document have been modified by a later OM.'
+  };
+
+  return `You are a professional government document formatter for the blog postalrulings.blogspot.com. You convert government PDF documents into beautifully formatted Blogger HTML posts.
+
+CRITICAL OUTPUT RULES:
+- Output RAW HTML only. No markdown, no backticks, no code fences, no explanations.
+- Start your response directly with: <!-- COVER_IMAGE_PLACEHOLDER -->
+- End with the last HTML closing tag. Nothing after it.
+
+STYLE GUIDE:
+- Light professional theme: white/light-grey backgrounds, navy #1e3a5a headers, blue #1e5aa0 accents
+- Font: Segoe UI, Tahoma, Geneva, sans-serif throughout all inline styles
+- All styles MUST be INLINE — Blogger strips external CSS
+- No html/head/body tags — post body HTML only
+- No external CSS or JS links
+
+DOCUMENT STATUS: ${statusMap[selectedStatus]}
+
+PREVIOUS REFERENCES (OMs this document supersedes or amends):
+${prevRefsBlock}
+
+LATER REFERENCES (OMs that amend or reference this document):
+${laterRefsBlock}
+
+REQUIRED SECTIONS in this exact order:
+1. <!-- COVER_IMAGE_PLACEHOLDER -->
+2. Navy table: file number left, date + location right, blue ministry bar below
+3. Status ribbon: amber=supersedes, red=superseded, green=active, orange=modified
+4. Centred "Office Memorandum" heading with blue underline
+5. Subject box with blue left border (#1e5aa0) on light blue background
+6. Decorative divider line with stars
+7. Preamble paragraph, justified, indented
+8. Main content sections — each para numbered, border-left:4px solid #1e5aa0, uppercase header
+   - Delegation/monetary tables: alternating white/#f4f7fb rows, coloured amount badges
+   - Gold badge for lowest limit, blue for middle, green for maximum
+   - Strikethrough in pink for old values that have been modified
+9. Signatory block right-aligned inside a bordered box
+10. Thin decorative divider
+11. "Referenced OMs" table — two columns: Subject+FileNo | Buttons (PDF + Post)
+12. "Later OMs" table — same structure
+13. Quick Reference Summary — navy header, bullet points inside
+14. Centred navy download button with box-shadow
+
+BADGE COLOUR CODES:
+- SUPERSEDES tag: background:#003a4a; color:#b2ebf2
+- SUPERSEDED BY / PARTIAL MODIFICATION tag: background:#5a1a00; color:#ffd0b0
+- THIS OM tag: background:#1a3a1a; color:#c8e6c9
+- LATER OM tag: background:#003a4a; color:#b2ebf2
+
+Use YOUR_DRIVE_LINK, YOUR_POST_LINK as placeholders where URLs are unknown.
+RAW HTML OUTPUT ONLY — start with <!-- COVER_IMAGE_PLACEHOLDER --> and nothing else.`;
+}
+
+
+function buildUserPrompt(postUrl, driveLink) {
+  return `Please read this PDF document and generate a complete, professionally formatted Blogger post HTML following all the style guidelines exactly.
+
+Post URL (this post): ${postUrl || 'YOUR_THIS_POST_URL'}
+Drive PDF Link: ${driveLink || 'YOUR_DRIVE_LINK'}
+
+Extract:
+1. File number / OM number
+2. Date of issue
+3. Issuing authority / ministry / department / address
+4. Subject / title
+5. All numbered paragraphs and their content
+6. Tables (delegation of powers, monetary limits, etc.)
+7. Signatory name and designation
+8. Distribution list (TO section)
+
+Then produce the complete Blogger post HTML. Make it comprehensive, accurate, and match the postalrulings.blogspot.com professional government document style exactly.`;
+}
+
+// ════════════════════════════════════════
+// RENDER OUTPUT
+// ════════════════════════════════════════
+function renderOutput() {
+  document.getElementById('actionsBar').style.display = 'flex';
+
+  if (currentTab === 'preview') {
+    showPreview();
+  } else {
+    showCode();
+  }
+}
+
+function showPreview() {
+  const frame = document.getElementById('previewFrame');
+  frame.style.display = 'block';
+  document.getElementById('htmlCode').style.display = 'none';
+
+  // Wrap in a complete HTML doc for preview
+  const wrapped = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  body { font-family: 'Segoe UI', sans-serif; max-width: 860px; margin: 0 auto; padding: 20px; background: #f8f6f0; }
+  img { max-width: 100%; }
+</style>
+</head><body>${generatedHTML.replace('<!-- COVER_IMAGE_PLACEHOLDER -->', generateCoverPlaceholder())}</body></html>`;
+
+  frame.srcdoc = wrapped;
+}
+
+function showCode() {
+  document.getElementById('previewFrame').style.display = 'none';
+  const ta = document.getElementById('htmlCode');
+  ta.style.display = 'block';
+  ta.value = generatedHTML;
+}
+
+function generateCoverPlaceholder() {
+  // Build a simple SVG cover as placeholder (the real app would use PIL/canvas)
+  return `<div style="width:100%;height:200px;background:linear-gradient(135deg,#0f2340 60%,#1e3a5a 100%);display:flex;align-items:center;justify-content:center;border-top:3px solid #1e5aa0;border-bottom:3px solid #0f2340;">
+    <div style="text-align:center;color:#fff;">
+      <div style="font-size:48px;">🏛️</div>
+      <div style="font-family:'Segoe UI',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#90b4d4;margin-top:8px;">Government of India · Ministry of Health & Family Welfare</div>
+      <div style="font-family:Georgia,serif;font-size:28px;font-weight:bold;color:#fff;margin-top:6px;">postalrulings.blogspot.com</div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (!generatedHTML) return;
+  if (tab === 'preview') showPreview();
+  else showCode();
+}
+
+// ════════════════════════════════════════
+// ACTIONS
+// ════════════════════════════════════════
+async function copyHTML() {
+  if (!generatedHTML) return;
+  try {
+    await navigator.clipboard.writeText(generatedHTML);
+    showToast('success', '✅ HTML copied to clipboard!');
+  } catch {
+    document.getElementById('htmlCode').select();
+    document.execCommand('copy');
+    showToast('success', '✅ HTML copied!');
+  }
+}
+
+function downloadHTML() {
+  if (!generatedHTML) return;
+  const blob = new Blob([generatedHTML], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `blogger_post_${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('success', 'Downloaded!');
+}
+
+function openPreview() {
+  if (!generatedHTML) return;
+  const wrapped = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>body{font-family:'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:20px;background:#f8f6f0;}img{max-width:100%;}</style>
+</head><body>${generatedHTML.replace('<!-- COVER_IMAGE_PLACEHOLDER -->', generateCoverPlaceholder())}</body></html>`;
+  const w = window.open('', '_blank');
+  w.document.write(wrapped);
+  w.document.close();
+}
+
+function regenerate() {
+  generatedHTML = '';
+  document.getElementById('previewFrame').style.display = 'none';
+  document.getElementById('htmlCode').style.display = 'none';
+  document.getElementById('actionsBar').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'flex';
+  // Reset progress steps
+  document.querySelectorAll('.progress-step').forEach(s => s.classList.remove('active','done'));
+  generatePost();
+}
+
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
+let toastTimer;
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.className = `toast ${type} show`;
+  t.innerHTML = (type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️') + ' ' + msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+initBlogIndex();
+</script>
+</body>
+</html>
