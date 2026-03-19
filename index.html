@@ -946,10 +946,14 @@ async function generatePost() {
     const systemPrompt = buildSystemPrompt();
     const userPrompt = buildUserPrompt(postUrl, driveLink);
 
-    // ── Check PDF size before sending (Vercel limit ~20MB base64) ──────────
-    const estimatedSizeMB = (pdfBase64.length * 0.75) / (1024 * 1024);
-    if (estimatedSizeMB > 18) {
-      throw new Error(`PDF is too large (${estimatedSizeMB.toFixed(1)} MB). Please use a PDF under 15 MB.`);
+    // ── PDF size info (purely informational — no blocking check) ───────────
+    // pdfBase64 is pure base64; original file size = base64Length * 0.75
+    const originalMB = (pdfBase64.length * 0.75) / (1024 * 1024);
+    const base64MB   = pdfBase64.length / (1024 * 1024);
+    console.log(`PDF: ~${originalMB.toFixed(2)} MB original, ~${base64MB.toFixed(2)} MB base64`);
+    // Only block if truly massive (base64 payload > 18 MB → original > ~13 MB)
+    if (base64MB > 18) {
+      throw new Error(`PDF is very large (~${originalMB.toFixed(1)} MB). Please use a PDF under 13 MB.`);
     }
 
     const response = await fetch('/api/generate', {
@@ -962,22 +966,32 @@ async function generatePost() {
       })
     });
 
-    // ── Safe JSON parse — never assume the response is JSON ──────────────
-    const rawText = await response.text();
+    // ── Safe JSON parse — read text first, then parse ────────────────────
+    let rawText;
+    try {
+      rawText = await response.text();
+    } catch (networkErr) {
+      throw new Error('Network error — could not reach the server. Check your internet connection.');
+    }
+
     let data;
     try {
       data = JSON.parse(rawText);
     } catch {
-      // Server returned HTML (error page, timeout, 413 too large, etc.)
-      console.error('Non-JSON server response:', rawText.slice(0, 300));
+      // Server returned non-JSON — log details to console for debugging
+      console.error('Non-JSON response | HTTP', response.status, '| Body:', rawText.slice(0, 500));
       if (response.status === 413) {
-        throw new Error('PDF is too large for the server. Please use a smaller PDF (under 10 MB).');
+        throw new Error('Request too large for the server (HTTP 413). PDF may be too big — try a smaller file.');
       } else if (response.status === 401 || response.status === 403) {
-        throw new Error('API key error. Check your GEMINI_API_KEY in Vercel → Settings → Environment Variables.');
+        throw new Error('API key rejected (HTTP ' + response.status + '). Go to Vercel → Settings → Environment Variables and check GEMINI_API_KEY.');
+      } else if (response.status === 500) {
+        throw new Error('Server error (HTTP 500). Check Vercel → Deployments → Functions → Logs for details.');
       } else if (response.status === 0 || !response.status) {
-        throw new Error('Network error. Check your internet connection and try again.');
+        throw new Error('Could not connect to server. Make sure the Vercel deployment is live and try again.');
       } else {
-        throw new Error(`Server returned an unexpected response (HTTP ${response.status}). Check Vercel logs for details.`);
+        // Show the actual raw response so user can diagnose
+        const preview = rawText.slice(0, 120).replace(/\n/g, ' ');
+        throw new Error(`Unexpected server response (HTTP ${response.status}): ${preview}`);
       }
     }
 
@@ -1223,4 +1237,3 @@ initBlogIndex();
 </script>
 </body>
 </html>
-
